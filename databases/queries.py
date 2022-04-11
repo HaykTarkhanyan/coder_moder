@@ -49,21 +49,21 @@ def execute_given_query(q, limit=20, output=False):
     
     return df
 
-
-def execute_basic_query(table_name, additional_filter=None, 
+def execute_basic_query(table_name, columns='*', additional_filter=None, 
                         date_col_name='date', start_date=None, end_date=None, 
                         order_by_column=None, order_type="DESC", 
-                        limit = 20, output=False):
+                        limit = 20, output=True):
     """
     Runs a basic 
     
-    select * from {table_name} where {date_col_name} between {start_date} and {end_date} {additional_filter} 
+    select {columns} from {table_name} where {date_col_name} between {start_date} and {end_date} {additional_filter} 
     order by {order_by_column} {order_type}  limit {limit}
      
     and fetches column names to return a clear pd.DataFrame
 
     Args:
         table_name (str):
+        columns (list of str): by default is *
         additional_filter (str): custom where clause like `merchant_id=509`, (default None) 
         date_col_name (str): name of the timestamp column (default is 'date')
         start_date (str): option, default is None
@@ -76,10 +76,6 @@ def execute_basic_query(table_name, additional_filter=None,
     Raises:
         ValueError if query returned no results
         
-    Note:
-        1. expects to have `cursor` already declared
-        2. written for mysql
-
     Returns:
         pd.DataFrame
     
@@ -87,7 +83,7 @@ def execute_basic_query(table_name, additional_filter=None,
     from time import time
     st = time()
 
-    q = f"""select * from {table_name}""" 
+    q = f"""select {', '.join(columns)} from {table_name}""" 
     
     if start_date and end_date:
         q += f' where {date_col_name} between "{start_date}" and "{end_date}"'
@@ -122,4 +118,3 @@ def execute_basic_query(table_name, additional_filter=None,
         raise ValueError(f'df for \n {q} \n is empty')
     
     return df
-
