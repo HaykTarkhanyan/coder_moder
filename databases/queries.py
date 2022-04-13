@@ -6,7 +6,7 @@ Table of content:
 date added here 26.03.22
 """
 
-def execute_given_query(q, limit=20, output=False):
+def execute_given_query(q, limit=20, output=True):
     """
     Runs a given query
     
@@ -28,6 +28,10 @@ def execute_given_query(q, limit=20, output=False):
     """
     from time import time
     st = time()
+    
+    if output:
+        print('executing following query \n')
+        print(q)
     
     cursor.execute(q)
     results = cursor.fetchall()
