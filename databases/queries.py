@@ -29,6 +29,9 @@ def execute_given_query(q, limit=20, output=True):
     from time import time
     st = time()
     
+    if limit:
+        q += f" limit {limit}"
+    
     if output:
         print('executing following query \n')
         print(q)
@@ -37,9 +40,6 @@ def execute_given_query(q, limit=20, output=True):
     results = cursor.fetchall()
     columns = [i[0] for i in cursor.description]
     df = pd.DataFrame(results, columns = columns)
-    
-    if limit:
-        q += f" limit {limit}"
     
     
     if output:
