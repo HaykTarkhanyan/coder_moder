@@ -115,7 +115,10 @@ def evaluate_model(predictions, actual, model_name=None,  filename=None, notes=N
         with open(filename, "w") as f:
             f.write(f"Geport generated: {datetime.now()}")
             if model_name: f.write(f"<h1> Model Name: {model_name} </h2>")
-            if notes: f.write(f"<h2> Notes: {notes} </h2>")
+            if notes: 
+                f.write(f"<h2> Notes:</h2>")
+                f.write(f"{notes}")
+
             f.write(f"<h2> Metrics </h2>")
             f.write(f"<b> R2: {r2.round(round_digits)} </b> <br>")
             f.write(f"MAE: {mae.round(round_digits)} <br>")
