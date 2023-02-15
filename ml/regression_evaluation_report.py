@@ -1,7 +1,7 @@
 
 
 # function to evaluate regression model
-def evaluate_model(predictions, actual, model_name=None,  filename=None, notes=None):
+def evaluate_model(actual, predictions, model_name=None,  filename=None, notes=None):
     """
     Function to evaluate regression model
 
@@ -18,8 +18,8 @@ def evaluate_model(predictions, actual, model_name=None,  filename=None, notes=N
         - saves results to file (if specified)
 
     Args:
-        predictions (np.array): model predictions 
         actual (np.array): actual values
+        predictions (np.array): model predictions 
         model_name (optional): name of the model 
         filename (optional): if specified, results will be saved to file
         notes (optional): additional notes to be saved to file
@@ -33,6 +33,7 @@ def evaluate_model(predictions, actual, model_name=None,  filename=None, notes=N
     from datetime import datetime    
     from io import BytesIO
     import base64
+#     import statsmodels.api as sm # for qq plot
 
     def save_figure_to_file(fig):
         # we need this for saving figures to html file
@@ -110,6 +111,12 @@ def evaluate_model(predictions, actual, model_name=None,  filename=None, notes=N
     predicted_vs_actual_distribution = save_figure_to_file(fig4)
     plt.close(fig4)
 
+#     fig5 = sm.qqplot(actual - predictions, line ='45', fit=True)
+#     plt.show()
+#     qqplot = save_figure_to_file(fig5)
+#     plt.close(fig5)
+
+
     # save to file
     if filename:    
         with open(filename, "w") as f:
@@ -135,3 +142,4 @@ def evaluate_model(predictions, actual, model_name=None,  filename=None, notes=N
             f.write(f'<img src="data:image/png;base64,{prediction_vs_actual}">')
             f.write(f'<img src="data:image/png;base64,{residuals_vs_predicted}">')
             f.write(f'<img src="data:image/png;base64,{residuals_distribution}">')
+            # f.write(f'<img src="data:image/png;base64,{qqplot}">')
