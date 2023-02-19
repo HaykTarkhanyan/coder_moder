@@ -6,6 +6,54 @@ import json
 import torch
 from sentence_transformers import util
 
+def get_classification_scores(model,X0,X1,Y0,Y1,threshold=0.5,detailed=False,
+                 class_prob_distplot=False,positive_class="churned",model_name=None,
+                 save=False,filename="classification_results"):
+    Y0_prob=model.predict_proba(X0)[:,1]
+    Y1_prob=model.predict_proba(X1)[:,1]
+    Y0_class=Y0_prob>threshold
+    Y1_class=Y1_prob>threshold
+    metrics = {'model': model, 
+    "Accuracy train:":accuracy_score(Y0, Y0_class),
+    "Accuracy test:":accuracy_score(Y1, Y1_class),
+    "Average Precision train:": average_precision_score(Y0, Y0_prob),
+    "Average Precision test:": average_precision_score(Y1, Y1_prob),
+    "ROC AUC train:":roc_auc_score(Y0, Y0_prob),
+    "ROC AUC test:":roc_auc_score(Y1, Y1_prob)
+    }
+    if detailed:
+        metrics.update({
+        "F1 train:":f1_score(Y0, Y0_class),
+        "F1 test:":f1_score(Y1, Y1_class),
+        "Precision train:":precision_score(Y0, Y0_class),
+        "Precision test:":precision_score(Y1, Y1_class),
+        "Recall train:":recall_score(Y0, Y0_class),
+        "Recall test:":recall_score(Y1, Y1_class)
+        })
+    if class_prob_distplot:
+        sns.distplot(Y1_prob[Y1==0],label=f'not {positive_class}', color='green')
+        sns.distplot(Y1_prob[Y1==1],label=positive_class)
+        plt.legend()
+        plt.show()
+    if model_name:
+        metrics.update({
+        "model":model_name,
+        "parameters":model.get_params()
+    })
+    if save:
+        if not os.path.exists(f"{filename}.csv"):
+            with open(f"{filename}.csv",'w') as csvfile:
+                wr = csv.writer(csvfile)
+                wr.writerow(metrics.keys())
+                
+        with open(f"{filename}.csv",'a') as csvfile:
+            wr = csv.writer(csvfile)
+            wr.writerow(metrics.values())
+
+    return metrics
+
+
+
 def compute_accuracy(df, category, prediction):
     """
     computes the accuracy(adjusted, en category_2n el enq vercnum)
