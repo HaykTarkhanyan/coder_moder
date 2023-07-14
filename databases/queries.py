@@ -1,9 +1,8 @@
 """
 Table of content:
-1. execute_given_query
-2. execute_basic_query
-
-date added here 26.03.22
+1. execute_given_query (added 26.03.22)
+2. execute_basic_query (added 26.03.22)
+3. get_all_tables (added 14.07.23)
 """
 
 def execute_given_query(q, limit=20, output=True):
@@ -122,3 +121,36 @@ def execute_basic_query(table_name, columns='*', additional_filter=None,
         raise ValueError(f'df for \n {q} \n is empty')
     
     return df
+
+def get_all_tables(cursor, schema, save_to_csv=False, output=False):
+    """
+    Returns a list of all table names in a given schema.
+    
+    Args:
+        cursor: a cursor object to execute queries
+        schema (str): the name of the schema to get tables from
+        save_to_csv (bool): whether to save the list of tables to a csv file (default False)
+        output (bool): whether to print progress messages (default True)
+        
+    Returns:
+        A list of all table names in the given schema.
+    """
+        
+    if output:  print(f"getting all tables from {schema} schema")
+    
+    cursor.execute(f"SELECT table_name FROM information_schema.tables WHERE table_schema = '{schema}'")
+
+    # Fetch all table names
+    tables = cursor.fetchall()
+
+    # Print all table names
+    all_tables = sorted([table[0] for table in tables])
+    
+    if output:  print(f"there are {len(all_tables)} tables in {schema}")
+    
+    if save_to_csv:
+        if output:  print(f"saving all tables to 'all_tables_{schema}.csv'")
+        pd.DataFrame(all_tables).to_csv('all_tables_{schema}.csv', index=False)
+    
+    return all_tables
+
