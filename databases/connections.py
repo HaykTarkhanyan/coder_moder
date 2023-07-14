@@ -11,6 +11,8 @@ date added here 26.03.22
 def connect_to_mysql_db(user, password, database, host, use_unicode=True):
     """
     returns connection and cursor
+
+    conda install pandas; pip install mysql; pip install mysql-connector-python; pip install tqdm
     """
 
     import pandas as pd
