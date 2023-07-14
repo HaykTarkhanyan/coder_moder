@@ -8,7 +8,7 @@ date added here 26.03.22
 """
 
 
-def connect_to_mysql_db(user, password, database, host, use_unicode=True):
+def connect_to_mysql_db(user, password, host, database=None, use_unicode=True):
     """
     returns connection and cursor
 
@@ -28,10 +28,11 @@ def connect_to_mysql_db(user, password, database, host, use_unicode=True):
     db_config = {
                 'user': user,
                 'password': password,
-                'database': database,
                 'host': host,
                 'use_unicode': use_unicode
             }
+    if database:
+        db_config['database'] = database
 
     try:
         conn = mysql.connector.connect(**db_config)
