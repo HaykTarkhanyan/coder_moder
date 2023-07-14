@@ -3,6 +3,7 @@ Table of content:
 1. execute_given_query (added 26.03.22)
 2. execute_basic_query (added 26.03.22)
 3. get_all_tables (added 14.07.23)
+4. check_if_tables_empty (added 14.07.23)
 """
 
 def execute_given_query(q, limit=20, output=True):
@@ -153,4 +154,46 @@ def get_all_tables(cursor, schema, save_to_csv=False, output=False):
         pd.DataFrame(all_tables).to_csv('all_tables_{schema}.csv', index=False)
     
     return all_tables
+
+def check_if_tables_empty(cursor, schema, tables=None, save_to_csv=False):
+    """
+    Returns a df with table names and whether they are empty or not.
+    
+    Args:
+        cursor: a cursor object to execute queries
+        schema (str): the name of the schema to get tables from
+        tables (list of str): a list of table names to check (by default is None)
+        
+    Returns:
+        A pd.DataFrame with the following columns:
+            table_name: the name of the table
+            is_empty: True if the table is empty, False otherwise
+    """
+    if not tables:
+        tables = get_all_tables(cursor, schema)
+    
+        def check_if_table_empty(cursor, schema, table):
+            """
+            Checks if a given table is empty or not.
+            
+            Args:
+                cursor: a cursor object to execute queries
+                schema (str): the name of the schema where the table is located
+                table (str): the name of the table to check
+                
+            Returns:
+                True if the table is empty, False otherwise
+            """
+    def check_if_table_empty(cursor, schema, table):
+        cursor.execute(f"select * from {schema}.{table} limit 1")
+        count = cursor.fetchall()
+        return not bool(count)
+        
+    df = pd.DataFrame(tables, columns=['table_name'])
+    df["is_empty"] = df.table_name.apply(lambda x: check_if_table_empty(cursor, schema, x))
+    
+    if save_to_csv:
+        df.to_csv(f"{schema}_empty_tables.csv", index=False)
+    
+    return df
 
