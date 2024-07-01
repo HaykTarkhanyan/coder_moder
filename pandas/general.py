@@ -1,5 +1,6 @@
 """
 Table of content:
+0. save_col_names_dfs_to_json
 1. get_datetime_features
 2. value_count_the_value_count
 3. get_sessions_occuring_multiple_times
@@ -7,6 +8,29 @@ Table of content:
 
 date added here 26.03.22
 """
+
+def save_col_names_dfs_to_json(folder, file_name="columns.json"):
+    """
+    Save the column names of all the dataframes in a folder to a json file
+    
+    Args:
+        folder (str): The folder containing the dataframes
+        file_name (str): The name of the json file to save the column names 
+        
+    Returns:
+        dict: A dictionary containing the column names of all the dataframes
+    """
+    columns = {}
+    for i in os.listdir(folder):
+        if not i.endswith(".csv"):
+            continue
+        df = pd.read_csv(f"{folder}/{i}", nrows=1)
+        columns[i.split(".")[0]] = df.columns.tolist()
+        
+    with open(file_name, 'w') as f:
+        json.dump(columns, f)
+        
+    return columns
 
 def get_datetime_features(df):
     df['ds'] = pd.to_datetime(df.ds)
