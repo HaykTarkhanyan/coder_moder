@@ -1,5 +1,5 @@
 def evaluate_model(actual, predictions, model_name=None,  filename=None, notes=None, return_metrics=False, 
-                   show_plots=False, show_metrics=True):
+                   show_plots=False, show_metrics=True, plots=False):
     """
     Function to evaluate regression model
 
@@ -25,6 +25,7 @@ def evaluate_model(actual, predictions, model_name=None,  filename=None, notes=N
         return_metrics (optional): if True, returns metrics as dictionary
         show_plots (optional): if True, shows plots
         show_metrics (optional): if True, shows metrics
+        plots (optional): if True, draws plots
 
     Returns:
         dict or None
@@ -46,76 +47,76 @@ def evaluate_model(actual, predictions, model_name=None,  filename=None, notes=N
 
     round_digits = 3
     # calculate metrics
-    r2 = r2_score(actual, predictions)
-    mae = mean_absolute_error(actual, predictions)
-    mse = mean_squared_error(actual, predictions)
-    rmse = np.sqrt(mean_squared_error(actual, predictions))
+    r2 = round(r2_score(actual, predictions), round_digits)
+    mae = round(mean_absolute_error(actual, predictions), round_digits)
+    mse = round(mean_squared_error(actual, predictions), round_digits)
+    rmse = round(np.sqrt(mean_squared_error(actual, predictions)), round_digits)
 
     # print metrics
     if show_metrics:
         print(f"Model: {model_name}")
-        print(f"R2: {round(r2, round_digits)}")
-        print(f"MAE: {round(mae, round_digits)}")
-        print(f"MSE: {round(mse, round_digits)}")
-        print(f"RMSE: {round(rmse, round_digits)}")
+        print(f"R2: {r2}")
+        print(f"MAE: {r2}")
+        print(f"MSE: {r2}")
+        print(f"RMSE: {r2}")
 
     # calculate correlations
-    pearson = pearsonr(actual, predictions)[0]
-    kendall = kendalltau(actual, predictions)[0]
-    spearman = spearmanr(actual, predictions)[0]
+    pearson = round(pearsonr(actual, predictions)[0], round_digits)
+    spearman = round(spearmanr(actual, predictions)[0], round_digits)
+    kendall = round(kendalltau(actual, predictions)[0], round_digits)
     
     if show_metrics:
-        print(f"Pearson Correlation: {round(pearson, round_digits)}")
-        print(f"Spearman Rho: {round(spearman, round_digits)}") 
-        print(f"Kendall Tau: {round(kendall, round_digits)}")
+        print(f"Pearson Correlation: {pearson}")
+        print(f"Spearman Rho: {spearman}") 
+        print(f"Kendall Tau: {kendall}")
               
-        
-    # plot predictions vs actual
-    fig1 = plt.figure(1)
-    # plt.plot([actual.min(), actual.max()], [actual.min(), actual.max()], 'k--', lw=4)
-    plt.scatter(actual, predictions)    
-    plt.xlabel("Actual")
-    plt.ylabel("Predicted")
-    plt.title("Predicted vs Actual")
-    if show_plots: 
-        plt.show()
-    prediction_vs_actual = save_figure_to_file(fig1)
-    plt.close(fig1)
+    if plots:
+        # plot predictions vs actual
+        fig1 = plt.figure(1)
+        # plt.plot([actual.min(), actual.max()], [actual.min(), actual.max()], 'k--', lw=4)
+        plt.scatter(actual, predictions)    
+        plt.xlabel("Actual")
+        plt.ylabel("Predicted")
+        plt.title("Predicted vs Actual")
+        if show_plots: 
+            plt.show()
+        prediction_vs_actual = save_figure_to_file(fig1)
+        plt.close(fig1)
 
-    # plot residuals vs Predicted
-    fig2 = plt.figure(2)
-    plt.scatter(actual, actual - predictions)
-    plt.xlabel("Predicted")
-    plt.ylabel("Residual")
-    plt.title("Residuals vs Predicted")
-    if show_plots:
-        plt.show()
-    residuals_vs_predicted = save_figure_to_file(fig2)
-    plt.close(fig2)
+        # plot residuals vs Predicted
+        fig2 = plt.figure(2)
+        plt.scatter(actual, actual - predictions)
+        plt.xlabel("Predicted")
+        plt.ylabel("Residual")
+        plt.title("Residuals vs Predicted")
+        if show_plots:
+            plt.show()
+        residuals_vs_predicted = save_figure_to_file(fig2)
+        plt.close(fig2)
 
-    # plot distribution of residuals
-    fig3 = plt.figure(3)
-    plt.hist(actual - predictions)
-    plt.xlabel("Residual")
-    plt.ylabel("Count")
-    plt.title("Distribution of Residuals")
-    if show_plots:
-        plt.show()
-    residuals_distribution = save_figure_to_file(fig3)
-    plt.close(fig3)
+        # plot distribution of residuals
+        fig3 = plt.figure(3)
+        plt.hist(actual - predictions)
+        plt.xlabel("Residual")
+        plt.ylabel("Count")
+        plt.title("Distribution of Residuals")
+        if show_plots:
+            plt.show()
+        residuals_distribution = save_figure_to_file(fig3)
+        plt.close(fig3)
 
-    # plot predicted vs actual distribution
-    fig4 = plt.figure(4) 
-    plt.hist(actual, alpha=0.5, label="Actual")
-    plt.hist(predictions, alpha=0.5, label="Predicted")
-    plt.xlabel("Value")
-    plt.ylabel("Count")
-    plt.title("Distribution of Predicted vs Actual")    
-    plt.legend()
-    if show_plots:
-        plt.show()
-    predicted_vs_actual_distribution = save_figure_to_file(fig4)
-    plt.close(fig4)
+        # plot predicted vs actual distribution
+        fig4 = plt.figure(4) 
+        plt.hist(actual, alpha=0.5, label="Actual")
+        plt.hist(predictions, alpha=0.5, label="Predicted")
+        plt.xlabel("Value")
+        plt.ylabel("Count")
+        plt.title("Distribution of Predicted vs Actual")    
+        plt.legend()
+        if show_plots:
+            plt.show()
+        predicted_vs_actual_distribution = save_figure_to_file(fig4)
+        plt.close(fig4)
 
 #     fig5 = sm.qqplot(actual - predictions, line ='45', fit=True)
 #     plt.show()
@@ -133,22 +134,23 @@ def evaluate_model(actual, predictions, model_name=None,  filename=None, notes=N
                 f.write(f"{notes}")
 
             f.write(f"<h2> Metrics </h2>")
-            f.write(f"<b> R2: {round(r2, round_digits)} </b> <br>")
-            f.write(f"MAE: {round(mae, round_digits)} <br>")
-            f.write(f"MSE: {round(mse, round_digits)} <br>")
-            f.write(f"RMSE: {round(rmse,round_digits)} <br>")
+            f.write(f"<b> R2: {r2} </b> <br>")
+            f.write(f"MAE: {mae} <br>")
+            f.write(f"MSE: {mse} <br>")
+            f.write(f"RMSE: {rmse} <br>")
 
             f.write(f"<h2> Correlations </h2>")
-            f.write(f"Pearson Correlation: {pearson.round(round_digits)} <br>")
-            f.write(f"Kendall Tau: {kendall.round(round_digits)} <br>")
-            f.write(f"Spearman Rho: {spearman.round(round_digits)} <br>")
+            f.write(f"Pearson Correlation: {pearson} <br>")
+            f.write(f"Kendall Tau: {kendall} <br>")
+            f.write(f"Spearman Rho: {spearman} <br>")
 
-            f.write(f"<h2> Plots </h2>")
-            f.write(f'<img src="data:image/png;base64,{predicted_vs_actual_distribution}">')
-            f.write(f'<img src="data:image/png;base64,{prediction_vs_actual}">')
-            f.write(f'<img src="data:image/png;base64,{residuals_vs_predicted}">')
-            f.write(f'<img src="data:image/png;base64,{residuals_distribution}">')
-            # f.write(f'<img src="data:image/png;base64,{qqplot}">')
+            if plots:
+                f.write(f"<h2> Plots </h2>")
+                f.write(f'<img src="data:image/png;base64,{predicted_vs_actual_distribution}">')
+                f.write(f'<img src="data:image/png;base64,{prediction_vs_actual}">')
+                f.write(f'<img src="data:image/png;base64,{residuals_vs_predicted}">')
+                f.write(f'<img src="data:image/png;base64,{residuals_distribution}">')
+                # f.write(f'<img src="data:image/png;base64,{qqplot}">')
             
     if return_metrics:
         metric_dict = {
