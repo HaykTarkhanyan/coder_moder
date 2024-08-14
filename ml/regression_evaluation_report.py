@@ -56,9 +56,10 @@ def evaluate_model(actual, predictions, model_name=None,  filename=None, notes=N
     if show_metrics:
         print(f"Model: {model_name}")
         print(f"R2: {r2}")
-        print(f"MAE: {r2}")
-        print(f"MSE: {r2}")
-        print(f"RMSE: {r2}")
+        print(f"MAE: {mae}")
+        print(f"MSE: {mse}")
+        print(f"RMSE: {rmse}")
+
 
     # calculate correlations
     pearson = round(pearsonr(actual, predictions)[0], round_digits)
