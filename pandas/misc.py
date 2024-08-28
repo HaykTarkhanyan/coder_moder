@@ -1,13 +1,14 @@
 def extract_data_from_sql(file_content):
     """
-    Works for this struture
+    Extracts the table name and data from a SQL insert statement.
     
-    insert into db_name.subjects (id, title)
-    values  (1, 'asdasdaad'),
-            (2, 'asdasdadas')
-
+    Example:
+    insert into dbname.table_name (id, name)
+    values  (1, 'panir'),
+            (5, 'hndkahav');	
+        
     Note:
-        Fails to include the last value
+    - this has the problem of not including the last column of the last row
     """
     # Extract table name and columns
     table_name_match = re.search(r"insert into ([\w\.]+) \((.*?)\)\nvalues", file_content, re.IGNORECASE)
@@ -28,10 +29,37 @@ def extract_data_from_sql(file_content):
     for row in csv_reader:
         data.append(row[:-1])
 
-    # print(data[1])
-    # Create a DataFrame
     df = pd.DataFrame(data, columns=columns)
     
-    
-
     return table_name, df
+
+# not tested
+def extract_data_from_sql_for_folder(folder_name, output_folder_name, save_to_parquet=False):
+    if not os.path.exists(folder_name):
+        raise ValueError(f"Folder {folder_name} not found")
+    
+    output_folder_name_csv = output_folder_name + "_csv"
+    if save_to_parquet:
+        output_folder_name_parquet = output_folder_name + "_parquet"
+        if not os.path.exists(output_folder_name_parquet):
+            os.makedirs(output_folder_name_parquet)
+    
+    if not os.path.exists(output_folder_name_csv):
+        os.makedirs(output_folder_name_csv)
+        
+    for i in tqdm(sql_files):
+        try:
+            file_path = os.path.join(output_folder_name_csv, i)
+            with open(file_path, 'r', encoding="utf8") as f:
+                data = f.read()
+
+            table_name, df = extract_data_from_sql(data)
+            
+            df.to_csv(f"output_folder_name_csv/{table_name}.csv", index=False)
+            if save_to_parquet:
+                df.to_parquet(f"{output_folder_name_parquet}/{table_name}.parquet")            
+            
+        except Exception as e:
+            print(f"Error: {e}", i, table_name)
+            continue
+    
