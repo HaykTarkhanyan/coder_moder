@@ -6,53 +6,108 @@ import json
 import torch
 from sentence_transformers import util
 
-def get_classification_scores(model,X0,X1,Y0,Y1,threshold=0.5,detailed=False,
-                 class_prob_distplot=False,positive_class="churned",model_name=None,
-                 save=False,filename="classification_results"):
-    Y0_prob=model.predict_proba(X0)[:,1]
-    Y1_prob=model.predict_proba(X1)[:,1]
-    Y0_class=Y0_prob>threshold
-    Y1_class=Y1_prob>threshold
-    metrics = {'model': model, 
-    "Accuracy train:":accuracy_score(Y0, Y0_class),
-    "Accuracy test:":accuracy_score(Y1, Y1_class),
-    "Average Precision train:": average_precision_score(Y0, Y0_prob),
-    "Average Precision test:": average_precision_score(Y1, Y1_prob),
-    "ROC AUC train:":roc_auc_score(Y0, Y0_prob),
-    "ROC AUC test:":roc_auc_score(Y1, Y1_prob)
+
+def get_classification_scores(model, X_train, X_test, y_train, y_test, threshold=0.5,
+                              data_info=True, detailed=True, class_prob_distplot=True, 
+                              positive_class="Churned", round_to=4, save_json=False, save_folder=None,
+                              model_name=None):
+    y_train_prob = model.predict_proba(X_train)[:,1]
+    y_test_prob = model.predict_proba(X_test)[:,1]
+    y_train_class = y_train_prob > threshold
+    y_test_class = y_test_prob > threshold
+    
+    
+    metrics = {
+        "datetime": pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S"),
+        'model': model, 
+        "model_name": model.__class__.__name__,
+        "Accuracy train:":accuracy_score(y_train, y_train_class),
+        "Accuracy test:":accuracy_score(y_test, y_test_class),
+        "Average Precision train:": average_precision_score(y_train, y_train_class),
+        "Average Precision test:": average_precision_score(y_test, y_test_class),
+        "ROC AUC train:":roc_auc_score(y_train, y_train_class),
+        "ROC AUC test:":roc_auc_score(y_test, y_test_class),
     }
+    
+    metrics["Overfitting"] = metrics["ROC AUC train:"] - metrics["ROC AUC test:"]
+    
     if detailed:
         metrics.update({
-        "F1 train:":f1_score(Y0, Y0_class),
-        "F1 test:":f1_score(Y1, Y1_class),
-        "Precision train:":precision_score(Y0, Y0_class),
-        "Precision test:":precision_score(Y1, Y1_class),
-        "Recall train:":recall_score(Y0, Y0_class),
-        "Recall test:":recall_score(Y1, Y1_class)
+        "F1 train:":f1_score(y_train, y_train_class),
+        "F1 test:":f1_score(y_test, y_test_class),
+        "Precision train:":precision_score(y_train, y_train_class),
+        "Precision test:":precision_score(y_test, y_test_class),
+        "Recall train:":recall_score(y_train, y_train_class),
+        "Recall test:":recall_score(y_test, y_test_class)
         })
-    if class_prob_distplot:
-        sns.distplot(Y1_prob[Y1==0],label=f'not {positive_class}', color='green')
-        sns.distplot(Y1_prob[Y1==1],label=positive_class)
-        plt.legend()
-        plt.show()
-    if model_name:
+    
+        
+    if data_info:
         metrics.update({
-        "model":model_name,
-        "parameters":model.get_params()
-    })
-    if save:
-        if not os.path.exists(f"{filename}.csv"):
-            with open(f"{filename}.csv",'w') as csvfile:
-                wr = csv.writer(csvfile)
-                wr.writerow(metrics.keys())
-                
-        with open(f"{filename}.csv",'a') as csvfile:
-            wr = csv.writer(csvfile)
-            wr.writerow(metrics.values())
+            "Train rows": len(y_train),
+            "Columns": X_train.shape[1],
+            "Test rows": len(y_test),
+            "Train positive class %": y_train.mean(),
+            "Test positive class %": y_test.mean()
+        })
+    
+    if class_prob_distplot:
+        fig = plt.figure(figsize=(6,3))
+        plt.title(f'Model: {model.__class__.__name__} - Probability Distribution')
+        sns.distplot(y_test_prob[y_test==0],label=f'not {positive_class}', color='green')
+        sns.distplot(y_test_prob[y_test==1],label=positive_class)
+        plt.legend()    
+        plt.show()
+        metrics["plot"] = fig
+        
+    if round_to:
+        metrics = {k: round(v, round_to) if isinstance(v, (int, float)) else v for k, v in metrics.items()}
+
+    if save_json:
+        keys_to_ignore = ["model", "plot"]
+        
+        path = f'{metrics["model_name"]}_metrics.json'
+        if save_folder:
+            if not os.path.exists(save_folder):
+                os.makedirs(save_folder)
+            path = f'{save_folder}/{path}' if save_folder else path
+
+        with open(path, 'w') as f:
+            json.dump({k: v for k, v in metrics.items() if k not in keys_to_ignore}, f)
+
+    if model_name:
+        metrics["model_name"] = model_name
 
     return metrics
 
-
+def compare_classification(res_1, res_2, round_to=3):
+    comparison = {}
+    for k, v in res_1.items():
+        if isinstance(v, (int, float)):
+            comparison[f"{k}" ] = v - res_2[k]
+        
+    
+    if round_to:
+        comparison = {k: round(v, round_to) if isinstance(v, (int, float)) else v for k, v in comparison.items()}    
+    
+    if res_1["model_name"] == res_2["model_name"]:
+        res_1["model_name"] = res_1["model_name"] + " (1st)"
+        res_2["model_name"] = res_2["model_name"] + " (2nd)"
+    
+    res_lst = []
+    for c in comparison:
+        res_lst.append(
+            {
+                "metric": c, 
+                res_1["model_name"]: res_1.get(c, None),
+                res_2["model_name"]: res_2.get(c, None),
+                "diff 1st and 2nd": comparison[c]
+            }
+        )
+    
+    df = pd.DataFrame(res_lst)
+    
+    return df
 
 def compute_accuracy(df, category, prediction):
     """
